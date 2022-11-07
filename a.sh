@@ -1,26 +1,49 @@
  #! /bin/bash
+ 
+
+#Color Defines 
+RED='\033[0;31m'
+NORMAL='\033[0m'
+YELLOW='\033[1;33m'
+BOLD=`tput bold`
+
+
+
+
+#Welcome Messages
 #Installing neccesary pagkages
+
+
 printf "Welcome ${USER}.\n
 
 Happy to see you! <-_->\n\n"
-printf ' \n [!] My name is Jarvis\n'
-printf " [!] I'm your personal assistant!!\n"
-printf '[+]Just making sure you have the necessary pagkages\n'
+printf "\n[!] My name is ${BOLD}Jarvis\n"
+printf "[!] I'm your personal assistant!!\n"
+printf "${RED}[+]Just making sure you have the necessary pagkages\n${NORMAL}"
+#echo -ne '#####                     (33%)\r'
+#sleep 1
+#echo -ne '#############             (66%)\r'
+#sleep 1
+#echo -ne '#######################   (100%)\r'
+#echo -ne '\n'
 #sleep 2
 #sudo apt install vnstat
 #sudo apt install sysstat
-#Welcome Messages
+#sudo apt install htop
 
 
+#Date info
 printf '======================================\n\n'
 printf "[+] Date: $(date +"%Y-%m-%d, %H:%M:%s")\n\n"
+printf "Made by ${BOLD}Solas${NORMAL} \n"
+
 
 printf '======================================\n\n'
 printf '[!] What can i do for you today?\n\n'
 
-RED='\033[0;31m'
-NORMAL='\033[0m'
-YELLOW='\033[1;33m'
+
+
+
 
 
 #this is the function that displays and operates the status menu
@@ -45,19 +68,23 @@ function getStatus(){
 		#Showing the cpu state
 		printf "\n${YELLOW}[+]Current Cpu State:\n${NORMAL}"
 		#Cpu utilization is 100-idle_time so we take it from vmstat
-		echo "[+]CPU Utilization: "$[100-$(vmstat 1 2|tail -1|awk '{print $15}')]"%"
+		printf "${YELLOW}[+]CPU Utilization: "
+		100-$(vmstat 1 2|tail -1|awk '{print $15}')
+		printf "%${NORMAL}"
 		printf "\n\n"
 		#showing the memory usage
 		#printf "${YELLOW}[+]Memory Usage:\n${NORMAL}"
 		#Memory usage printing the $3/$2 columns * 100
-		printf "${YELLOW}[+]Memory Usage: $(free | grep Mem | awk '{print $3/$2 * 100}')% ${NORMAL} \n"
+		printf "${YELLOW}[+]Memory Usage:"
+		free | grep Mem | awk '{print $3/$2 * 100}'
+		printf "% ${NORMAL}"
 		
 		getStatus;;
 		#free ;;
 		"3") 
 		printf "${YELLOW}[+]Network Bandwidth: \n $(vnstat) ${NORMAL}"
 		getStatus;;
-		"4")printf '\n[+]Disk percentage usage:\n'
+		"4")printf "${YELLOW}\n[+]Disk percentage usage:\n ${NORMAL}"
 		df -hl |grep '/sda' |awk '{print $1":"$5}'
 		getStatus
 		;;
@@ -73,7 +100,7 @@ function getStatus(){
 #this is the function i use for updating packages if the user wants to
 function updateAll(){
 
-		echo "Do you want me to install all the updates? (Y/N):"
+		printf "${RED}[!]Do you want me to install all the updates? (Y/N):${NORMAL}"
 
 
 		read updateCommand
@@ -95,21 +122,55 @@ function updateAll(){
 }
 
 
+#this function is used for os-update check
+function checkOsVersion(){
+printf "${RED}[+]Do you want to update OS Version? (Y/N):${NORMAL}"
+		read answer
+		case "$answer" in
+			"y"|"Y")
+			#open os-updater
+			sudo update-manager –devel-release;;
+			"n"|"N")printf "[-]Your choise ${USER} \n";;
+			*)printf "${RED}[-]Wrong input"$?
+			checkOsVersion;;
+			esac
+}
+
+
+#systemctl --all list-units --type=service -n 100
+
+ #systemctl show vgauth.service |grep 'SubState'
 #this is the function that displays and operates the update menu
 function doINeedUpdate(){
 	#inside menu
 	printf '======================================\n\n'
 	echo "1) Which package require update"
 	echo "2) Update to newer OS version"
-	echo "3) Back to main menu"
+	echo "3) Check for new Kernel Version"
+	echo "4) Back to main menu"
 
 	read command
 	case "$command" in
 		"1")apt list --upgradable
 		updateAll
 		;;
-		"2");;
-		"3")printf "\nAs you wished ${USER} \n"
+		"2")		
+		checkOsVersion
+		doINeedUpdate;;
+		"3")printf "Current Kernel Version:"
+		#showing current kernel infos
+		uname -srv
+		#sleep 2
+		#check for new kernel version
+		#s=$(uname -v)
+		#if [["$s" != "6.0.7" ]]
+		#then
+		#xdg-open 'https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.0.7.tar.xz'
+		#else printf "You have the latest Kernel Version!"
+		#fi
+		#doINeedUpdate
+		;;
+		"4")printf "\nAs you wished ${USER} \n"
 		startMenu;;
 	esac
 }
@@ -131,7 +192,10 @@ function whoIsWho(){
 		"1")who
 		printf "\n "
 		whoIsWho;;
-		"2") w -h
+		"2") 
+		#showing only 3 columns of the w command to be more readable
+		w | awk '{print $1 "    "  $4 "    "  $8}'
+		#w -h
 		whoIsWho;;
 		"3") startMenu;;
 		*) "Please enter a valid option of the menu"
@@ -172,6 +236,59 @@ function getStorage(){
 	esac
 }
 
+#function operation Services menu
+function getServiceStatus(){
+	#checking if the user wants to display all the services
+	echo 'Do you want to display Services: (Y/N)'
+	read displayService
+	case "$displayService" in
+		"y"|"Y")
+		#showing all services in the system
+		printf "$(systemctl list-units --type=service --all)"
+		;;
+		"n"|"N") 
+		# ":" is working like break
+		: ;;
+		*);;
+	esac
+	
+	#Input the services you want to see the status
+	printf "${RED}\nInput service name you want to check status: ${NORMAL}"
+	read serviceName
+	#checking if the service exists.
+	if systemctl list-units --type=service --all | grep -q "$serviceName"
+	then
+   		 echo "$serviceName exists."
+   		 #checking the status of the service
+   		 service $serviceName status | grep 'Active'
+   		 
+   		 #Picking the operation you want to input in the service.
+	printf "Input an operation for the service:\n"
+	printf "${YELLOW}[Start(1) / Stop(2) / Restart(3) / Nothing(4)]\n${NORMAL}"
+	read operation
+		
+	case "$operation" in
+		"start"|"Start"|"START"|"1")printf "${YELLOW}[+]Trying to start $serviceName ...${NORMAL}"
+		service $serviceName start
+		$?;;
+		"stop"|"Stop"|"STOP"|"2")printf "${YELLOW}[+]Trying to stop $serviceName ...${NORMAL}"
+		service $serviceName stop
+		$?;;
+		"restart"|"Restart"|"RESTART"|"3")printf "${YELLOW}[+]Trying to restart $serviceName ...${NORMAL}"
+		service $serviceName restart
+		$?;;
+		"nothing"|"Nothing"|"NOTHING"|"4")printf "${YELLOW}[-]We do nothing with $serviceName ...${NORMAL}"
+		$?;;
+		*) printf "${RED}[!]I can not operate in the service.";;
+	esac
+	else
+    		echo "$serviceName service does NOT exist."
+	fi
+	
+	
+	
+}
+
 #this is the function that displays the starting menu for the user
 function startMenu(){
 echo "1) status"
@@ -188,7 +305,7 @@ case "$command" in
 	"1") getStatus;;
 	"2") whoIsWho;;
 	"3") doINeedUpdate;;
-	"4") echo "You choose service";;
+	"4") getServiceStatus;;
 	"5") getStorage;;
 	"6") echo "[-]Have a good day ${USER} !";;
 	*)
@@ -199,7 +316,7 @@ case "$command" in
 esac
 }
 
-
+#start the program
 startMenu
 
 
