@@ -35,10 +35,13 @@ jobs:
       - run: |
           echo $HOME
           ls -la $HOME/.kube/
-          touch /tmp/config
           touch $HOME/.kube/config
-          echo hello > /tmp/config
+          echo -e "Hello World" > $HOME/.kube/config
+          ls -al $HOME/.kube/
+          cd $HOME/
+          ls -al
       - uses: actions/upload-artifact@v4
         with:
-          name: my-artifact
-          path: /tmp/config
+          name: config
+          path: $HOME/.kube/config
+      
