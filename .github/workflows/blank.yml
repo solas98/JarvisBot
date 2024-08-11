@@ -32,7 +32,10 @@ jobs:
           echo test, and deploy your project.
 
       - run: mkdir -p $HOME/.kube/
-      - run: echo hello > $HOME/.kube/config
+      - run: |
+          echo $HOME
+          ls -la $HOME
+          echo hello > $HOME/.kube/config
       - uses: actions/upload-artifact@v4
         with:
           name: my-artifact
