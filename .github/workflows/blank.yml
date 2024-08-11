@@ -38,10 +38,9 @@ jobs:
           touch $HOME/.kube/config
           echo -e "Hello World" > $HOME/.kube/config
           ls -al $HOME/.kube/
-          cd $HOME/
-          ls -al
+          cat  $HOME/.kube/config
       - uses: actions/upload-artifact@v4
         with:
           name: config
-          path: $HOME/.kube/config
+          path: "$HOME/.kube/config"
       
