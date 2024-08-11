@@ -39,8 +39,10 @@ jobs:
           echo -e "Hello World" > $HOME/.kube/config
           ls -al $HOME/.kube/
           cat  $HOME/.kube/config
+      - run: cp $HOME/.kube/config ${{ runner.temp }}/config
+
       - uses: actions/upload-artifact@v4
         with:
           name: config
-          path: "$HOME/.kube/config"
+          path: ${{ runner.temp }}/config
       
